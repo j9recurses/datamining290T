@@ -1,0 +1,222 @@
+Janine Heiser
+## Questions-hw2 #####
+
+############################################################
+ 1- What are the types of data available to you?
+
+This fall, for the info257, Databases, I wrote an ETL tool-
+(basically a collection of ruby scripts run on regular intervals via crontab) that collected  internet “trending” data from major web platforms and social networks. 
+This ETL scraped some websites and made a bunch of API calls to obtain the data and then cleaned and dumped everything into a database.  
+
+ The data set hopes to acheive the following purposes:
+
+to create an database model of world-trends that give gives a way to both see trends occur in real time (instantaneous) and think about trends in the long-term (over a course of a week, month, year, etc)
+map that trending data to the geographical  cordinates of latitude and longitude how the data pieces geographically relate to each other; 
+provide a way for users to compare and contrast what's “trending” on different search platforms and social networks to see if there are common themes
+show the duration of time that  items/topics/people/ideas/places/stories are popular/trending on the internet
+to illuminate a potential “zeitgeist” that may or may not exist on the internet or in the world.
+Sources of Data
+
+
+Below lists ths specific APIs and websites from where I gathered data from:
+
+Twitter →  http://www.twitter.com → social networking platform
+ API resource, GET trends/available
+Returns the locations that Twitter has trending topic information for.
+The location is returned in a woeid (yahoo where on earth id)
+When I did this project, the API returned at total of 415 locations. 
+EX of API resource, GET https://api.twitter.com/1.1/trends/available.json
+http://dev.twitter.com/docs/api/1.1/get/trends/available
+
+API resource, GET trends/place
+Each API call returns the top 10 trending topics for a a specific yahoo WOEID that trending data is avaible for. 
+trends/place data is refreshed by twitter every 5 minutes, but users can only make 15 calls to this API in a 15 minute period
+Since this API is rate limited, users have to authenticate when they make API calls. 
+Required parameters:
+WOEID (The Yahoo! Where On Earth ID of a location)
+EX of API resource call: GET  https://api.twitter.com/1.1/trends/place.json?id=1
+http://dev.twitter.com/docs/api/1.1/get/trends/place
+
+Google Hot Trends →  http://www.google.com/trends/hottrends → search engine site
+Google releases the number of people that  searching for different topics using google search engines
+On the google hot trend website, google publishes the hot trend information for  the following 8 countries:  USA, UK, Australia, Canada, Germany, Hong Kong, India, Isreal, Japan, Russia, Signapore, Taiwan
+Google only makes the US hottrends data availible for via an RSS feed at http://www.google.com/trends/hottrends/atom/hourly; no other countries are availible there
+I was able to get the trend data for the other 7 countries by writing a ruby script that scraped the google hot trend web site. 
+Google updates their data about what's trending in differnet countries about every 1-5 hours, depending on the country. 
+
+Youtube →  http://www.youtube.com → video search engine
+API resource,  GET Most Popular
+API returns the feed of the most popular videos for the past day
+Also can return the most popular videos for a particular geographical region for the past day:
+The most popular videos for each day is available for over over 39 countries. 
+EX of API resource call: https://gdata.youtube.com/feeds/api/standardfeeds/most_popular
+EX of API resource call: http://gdata.youtube.com/feeds/api/standardfeeds/regionID/most_popular?v=2
+http://developers.google.com/youtube/2.0/developers_guide_protocol_video_feeds
+
+Instagram →  Instagram.com → photo sharing social networking platform
+API resource,  GET Most Popular
+This API gets a list of what media is most popular at the moment. Can return mix of image and video types. API will also return the latitude and longitude coordinates of popular item when availible. 
+EX of API resource call: https://api.instagram.com/v1/media/popular?access_token=ACCESS-TOKEN
+http://instagram.com/developer/endpoints/media/
+Instagram updates this API with new data at different rates; when the information is released is more sporadic than google hot trends or twitter. 
+
+Yahoo Where On Earth Id → Geographical/Mapping Data Source → http://developer.yahoo.com/geo/geoplanet/guide/concepts.html
+
+A yahoo Where On Earth ID (WOEID).  Is a unique identifier that is assigned geographical entities on earth; this id is never changed; it acts as unique identifier for a specific place on earth. 
+Using the yahoo WOEID API, you can retrieve the latitude and longitude, as well as other geographical information for a specific place.  To call the WOEID API: 
+'http://where.yahooapis.com/v1/place/'woeid?[developerapikey]
+The pieces of trend dating that I collected had to normally related;  when taken directly from the datasource, that could relate pieces of trending data from different sources to one another. To solve the problem of normally relating the data, I used the yahoo woeid to map the data to a specific geographic place. 
+
+
+############################################################
+ 2.For data sets: how many records are in the data set?
+  So far, there is:
+   132158 records of witter trends data;
+  654 records for google hot trends
+  19705 records for instagram
+  my youtube data got messed up and I need to start 
+  collecting it again. 
+
+############################################################
+ 3.For API: what are the limits on fetching data?
+ No real limits on youtube, yahoo woeids, instagram or google hot trends. Twitter trends API has a rate limit of 15 requests per 15 minutes, meaning you can make one request per minute. 
+
+############################################################
+4. Provide an "interesting" record, explain its properties and why it is interesting
+
+Below is a record of twitter data from the trends API that shows that Punxsutawney Phil was a top twitter trending item, worldwide on ground hog day, feb. 2, 2014. This record is interesting because:
+1.the woeid says where the twitter item is trending
+2. you can see the data when the twitter item was trending
+3. you can see the exact item that was trending
+4. the record shows the url to actual twitter search page of
+all the mentions of Punxsutawney Phil
+
+idtwtrendplaces | woeid    | the_date   | sdoid | retrieved_at        | as_of     | name              | url                                                 |
++-----------------+----------+------------+-------+---------------------+-----------+-------------------+-----------------------------------------------------+
+|          125949 |        1 | 2014-02-02 |     1 | 2014-02-02 14:01:03 | T13-59-59 | Punxsutawney Phil | http://twitter.com/search?q=%22Punxsutawney+Phil%22 |
+
+
+############################################################
+5. What are 3 questions you could answer using your data?
+Below are 3 semi-interesting sql reports queries that I wrote last semester during the info 257- databases classs for this data set:
+
+---Report 1: 
+--In the past 5 days, what and in what countries have google ----and twitter had similar trend items ?
+
+select the_date, twitter_retreivedat, google_retreivedat, countryname, twitter_trend, google_trend, 
+(twitter_retreivedat - google_retreivedat) as timediff,  google_search_count, latcent, longcent, 
+google_trend_image
+from (
+	select t.the_date, 
+	c.name as countryname,
+	c.latcent, 
+	c.longcent,
+	t.retrieved_at as twitter_retreivedat, 
+	gt.retrieved_at as google_retreivedat, 
+	t.name as twitter_trend,
+	trending_item as google_trend, 
+	trend_search_count as google_search_count, 
+	gt.google_trend_ranking, 
+	trend_image_url as google_trend_image 
+	from twitter_trends_country
+	join country c on t.woeid = c.woeid 
+	join  google_hottrends gt on c.woeid = gt.woeid and gt.the_date = t.the_date
+	where t.the_date > '2013-12-12'
+) z  where twitter_trend like  google_trend
+order by twitter_retreivedat desc;
+
+
+
+--report drills deeper: Query for where and when google and 
+--twitter trends -have been similar:
+
+  select the_date,countryname, twitter_trend, google_trend, latcent, longcent, google_trend_image
+ from (
+	select t.the_date, 
+	c.name as countryname,
+	c.latcent, 
+	c.longcent,
+	t.retrieved_at as twitter_retreivedat, 
+	gt.retrieved_at as google_retreivedat, 
+	t.name as twitter_trend,
+	trending_item as google_trend, 
+	trend_search_count  as google_search_count, 
+	gt.google_trend_ranking, 
+	trend_image_url as google_trend_image 
+	from twitter_trends_country t
+	join country c on t.woeid = c.woeid 
+	join  google_hottrends gt on c.woeid = gt.woeid and gt.the_date = t.the_date
+	where t.the_date > '2013-12-12'
+) z  where twitter_trend like  google_trend
+group by  the_date,countryname, twitter_trend, google_trend,latcent, longcent
+order by the_date desc 
+
+
+--Report number 2:  Find the 35  highest trending/most talked-- --items in the data set; ironically, christmas actually comes --in first place :)
+create  temporary table most_popular (the_date date, phrase varchar(100), sdoid int,  countct int) 
+--
+create  temporary table ipp as select the_date, substring(caption,1,99) , sdoid, count(*) as ct from instgm_popular group by the_date, caption, sdoid
+ order by count(*) desc limit 20;
+ 
+ insert most_popular(the_date, phrase, sdoid, countct) select * from  ipp;
+ ----
+create  temporary table gtp as select the_date, trending_item , sdoid, count(*) as ct from google_hottrends group by the_date, trending_item,sdoid
+ order by count(*) desc limit 20;
+
+insert most_popular(the_date, phrase, sdoid, countct) select * from  gtp;
+
+---
+create  temporary table ytp as select the_date, videoname , sdoid, count(*) as ct from youtube_popular group by the_date, videoname,sdoid
+ order by count(*) desc limit 20;
+
+insert most_popular(the_date, phrase, sdoid, countct) select * from  ytp;
+-----
+
+create  temporary table ttc as select the_date, name , sdoid, count(*) as ct from twitter_trends_country group by the_date, name,sdoid
+ order by count(*) desc limit 20;
+
+insert most_popular(the_date, phrase, sdoid, countct) select * from  ttc;
+
+--
+create  temporary table ttp as select the_date, name , sdoid, count(*) as ct from twitter_trends_places group by the_date, name,sdoid
+ order by count(*) desc limit 20;
+
+insert most_popular(the_date, phrase, sdoid, countct) select * from  ttp;
+
+-----
+--by day
+select * from most_popular order by countct desc 
+
+--overall top item
+select phrase , sum(countct) from(  
+select phrase,countct from most_popular order by countct desc  
+)z group by phrase order by  sum(countct) desc  
+
+
+
+
+----Query for report -----
+--Report 3: 
+-get twitter trend data for specific cities on a specific day
+
+
+select distinct p.name,  tp.the_date, tp. name,  p.latcent, p.longcent  from twitter_trends tp
+inner join  places p on  tp.woeid = p.woeid
+where (p.name = 'San Francisco' and tp.the_date > '2013-12-15' and tp.the_date < '2013-12-17') ;
+
+select distinct p.name, tp.the_date, tp. name,  p.latcent, p.longcent  from twitter_trends tp
+inner join  places p on  tp.woeid = p.woeid
+where (p.name = 'London' and tp.the_date > '2013-12-15' and tp.the_date < '2013-12-17'); 
+
+
+select distinct p.name, tp.the_date, tp. name ,  p.latcent, p.longcent  from twitter_trends tp
+inner join  places p on  tp.woeid = p.woeid
+where (p.name = 'Seattle' and tp.the_date > '2013-12-15' and tp.the_date < '2013-12-17') ;
+
+
+--the three above queries are equiv. To the one below: 
+
+select distinct p.name, tp.the_date, tp. name ,  p.latcent, p.longcent  from twitter_trends tp
+inner join  places p on  tp.woeid = p.woeid
+where ((p.name = 'Chicago' or p.name ='Portland' or p.name = 'Austin') and tp.the_date > '2013-12-15' and tp.the_date < '2013-12-17') 
+order by p.name
