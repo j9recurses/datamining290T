@@ -1,0 +1,3 @@
+#####OUTPUT RESULTS##########
+Gini Index: 0.0783926465357
+Gini Index after split: 0.181356122583
