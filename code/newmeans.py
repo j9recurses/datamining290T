@@ -24,14 +24,22 @@ k = 2  # number of clusters
 
 def pick_centroids(xs, k):
     """Return list of num centroids given a list of numbers in xs"""
-    mymin = min(xs)
-    mymax =  max(xs)
+    mymin = int(min(xs))
+    print mymin
+    mymax =  int(max(xs))
+    print mymax
     centroids = []
-    for myk in range(k):
-        centroids.append(random.uniform(mymin, mymax))    
-    #make sure that centroids are the same, then recurse if the same
-    if len(centroids) != len(set(centroids)):
-        pick_centroids(xs, k)
+    myk =  range(k)
+   # while len(centroids) != len(set(centroids)) | len( centroids) == 0: 
+    while len( centroids) == 0:
+        while len(centroids) != len(set(centroids): 
+            for k in myk:
+                print "in the loop"
+            
+                 #print i
+                centroids.append(random.randrange(mymin, mymax))
+                print centroids
+    print centroids
     return centroids
 
 
@@ -43,55 +51,47 @@ def distance(a, b):
 
 
 def centroid(xs):
-    """Return the centroid given a list of numbers, xs"""
+    """Return the centroid number given a list of numbers, xs"""
     avg = (float(sum(xs))/float(len(xs)))
+    print avg
     return avg
 
 def cluster(xs, centroids):
     """Return a list of clusters centered around the given centroids.  Clusters
     are lists of numbers."""
-    clusters = [[] for c in centroids]
-    for x in xs:
+
+    #clusters = [[] for c in centroids]
+    #for x in xs:
         # find the closest cluster to x
-        dist, cluster_id = min((distance(x, c), cluster_id) for cluster_id, c in enumerate(centroids))
+    #   dist, cluster_id = min((distance(x, c), cluster_id) for cluster_id, c in enumerate(centroids))
         # place x in cluster
-        clusters[cluster_id].append(x)
-    return clusters
+     #   clusters[cluster_id].append(x)
+    #return clusters
 
 
 def iterate_centroids(xs, centroids):
     """Return stable centroids given a dataset and initial centroids"""
 
-    err = 0.001 # minimum amount of allowed centroid movement
-    observed_error = 1 # Initialize: maxiumum amount of centroid movement
-    new_clusters = [[] for c in centroids] # Initialize: clusters
+    err = 0.001  # minimum amount of allowed centroid movement
+    observed_error = 1  # Initialize: maxiumum amount of centroid movement
+    new_clusters = [[] for c in centroids]  # Initialize: clusters
 
     while observed_error > err:
         new_clusters = cluster(xs, centroids)
-        print "really new clusters"
-        print new_clusters
         new_centroids = map(centroid, new_clusters)
-        print "print my centroids"
-        print new_centroids
 
         observed_error = max(abs(new - old) for new, old in zip(new_centroids, centroids))
-        print "my error"
-        print observed_error
         centroids = new_centroids
 
     return (centroids, new_clusters)
 
 
-
-
-
 #### Main part of program: 
-    # Pick initial centroid, iterative to find final centroids, Print results ##
+    # Pick initial centroid, iterative to find final centroids, Print results ##a
 #####
 
 initial_centroids = pick_centroids(dataset, k)
-print "intial centroids"
 print initial_centroids
-final_centroids, final_clusters = iterate_centroids(dataset, initial_centroids)
-print "Centroid: %s" % centroid
-print "Cluster contents: %r" % cluster
+#final_centroids, final_clusters = iterate_centroids(dataset, initial_centroids)
+##   print "Centroid: %s" % centroid
+  #  print "Cluster contents: %r" % cluster
